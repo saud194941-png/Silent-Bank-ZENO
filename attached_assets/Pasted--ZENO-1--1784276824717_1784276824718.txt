@@ -1,0 +1,229 @@
+أريد تنفيذ جولة تحسين وفحص شاملة لمنصة ZENO قبل الاختبار النهائي.
+
+هذه المهمة مخصصة لـ:
+1. التأكد أن كل زر ورابط وعنصر تفاعلي يعمل.
+2. إضافة شعار ZENO الرسمي في كامل المشروع.
+3. تطبيق خطوط ثمانية على جميع الصفحات والعناصر.
+4. إصلاح أي أخطاء في الواجهة أو Console.
+
+========================================
+أولًا: إضافة شعار ZENO
+========================================
+
+أنشئ الملف التالي:
+
+public/zeno-logo.svg
+
+واستخدم داخله هذا الشعار المبسط، وهو مستوحى من الهوية البصرية المعتمدة لزينو:
+
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="zenoGradient" x1="34" y1="38" x2="222" y2="218" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="0.52" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#A855F7"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="256" height="256" rx="58" fill="#07111F"/>
+  <rect x="1" y="1" width="254" height="254" rx="57" stroke="white" stroke-opacity="0.08"/>
+
+  <path d="M52 60H208L169 100H92L52 60Z" fill="url(#zenoGradient)" filter="url(#glow)"/>
+  <path d="M48 196H204L164 156H88L48 196Z" fill="url(#zenoGradient)" filter="url(#glow)"/>
+
+  <path d="M45 137C73 105 95 100 119 118C142 136 157 149 182 135C195 128 207 117 220 113"
+        stroke="url(#zenoGradient)"
+        stroke-width="9"
+        stroke-linecap="round"
+        filter="url(#glow)"/>
+
+  <path d="M45 149C73 117 95 112 119 130C142 148 157 161 182 147C195 140 207 129 220 125"
+        stroke="url(#zenoGradient)"
+        stroke-opacity="0.55"
+        stroke-width="3"
+        stroke-linecap="round"/>
+</svg>
+
+استخدم الشعار في:
+
+- صفحة تسجيل الدخول.
+- Sidebar.
+- Header أو Topbar عند الحاجة.
+- Favicon.
+- شاشة التحميل.
+- صفحة الخطأ.
+- صفحة About أو Landing إن وجدت.
+
+استخدم:
+
+<img src="/zeno-logo.svg" alt="شعار زينو" />
+
+أو مكوّن Next Image إذا المشروع يستخدم Next.js.
+
+أضف بجانب الشعار:
+
+ZENO
+زينو
+The Silent Bank
+
+لا تستخدم حرف Z نصيًا بدل الشعار بعد الآن.
+
+========================================
+ثانيًا: تطبيق خطوط ثمانية
+========================================
+
+طبّق هذه الخطوط في كامل المشروع:
+
+1. thmanyahsans-Regular
+https://cdn.jsdelivr.net/gh/saud194941-png/Lines@main/thmanyahsans-Regular.otf
+
+2. thmanyahserifdisplay-Bold
+https://cdn.jsdelivr.net/gh/saud194941-png/Lines@main/thmanyahserifdisplay-Bold.otf
+
+3. thmanyahseriftext-Medium
+https://cdn.jsdelivr.net/gh/saud194941-png/Lines@main/thmanyahseriftext-Medium.otf
+
+أضفها باستخدام @font-face داخل global CSS.
+
+الاستخدام الإلزامي:
+
+- thmanyahserifdisplay-Bold:
+  العناوين الرئيسية، عناوين الصفحات، عناوين البطاقات، اسم ZENO.
+
+- thmanyahseriftext-Medium:
+  الفقرات، الشروحات، نصوص التوصيات، رسائل مساعد زينو.
+
+- thmanyahsans-Regular:
+  الأزرار، القوائم، الجداول، الأرقام، الحقول، الشارات، Sidebar، Topbar.
+
+لا تستخدم أي خط آخر إلا fallback مثل sans-serif عند فشل التحميل.
+
+تأكد أن الخطوط تعمل في:
+- Login
+- Customer Dashboard
+- Recommendations
+- Approvals
+- Transactions
+- Assistant
+- Privacy
+- Admin
+- Analyst
+- Rules
+- Modals
+- Toasts
+- Mobile view
+
+========================================
+ثالثًا: فحص جميع الأزرار
+========================================
+
+اختبر كل زر وعناصر الواجهة.
+
+صفحة تسجيل الدخول:
+- دخول العميل.
+- دخول الإدارة.
+- دخول المحلل.
+- الاستخدام السريع للحسابات التجريبية.
+- إظهار وإخفاء كلمة المرور إن وجد.
+- تسجيل الخروج.
+
+لوحة العميل:
+- مراجعة العملية.
+- لماذا اقترح زينو هذا؟
+- التحويل السريع.
+- دفع فاتورة.
+- وضع السفر.
+- كشف الحساب.
+- عرض جميع العمليات.
+
+التوصيات:
+- قبول التوصية.
+- رفض التوصية.
+- عرض السبب.
+- فلترة التوصيات.
+- الانتقال إلى مركز الموافقات.
+
+مركز الموافقات:
+- تأكيد تجريبي.
+- إلغاء.
+- Modal التأكيد.
+- تحديث الحالة بعد التنفيذ.
+
+المساعد:
+- إرسال رسالة.
+- زر Enter.
+- الأسئلة المقترحة.
+- تجهيز التحويل المعتاد.
+- ظهور الردود بشكل آمن باستخدام textContent وليس innerHTML لإدخال المستخدم.
+
+الخصوصية:
+- جميع Toggles.
+- الوضع المبسط.
+- التباين العالي.
+- تكبير الخط.
+- تقليل الحركة.
+- حذف بيانات العرض.
+- إعادة بيانات العرض.
+
+الإدارة والمحلل:
+- تغيير قواعد التوصيات.
+- الفلاتر.
+- الجداول.
+- الرسوم.
+- التنقل بين الصفحات.
+
+التنقل العام:
+- Sidebar.
+- القائمة على الجوال.
+- Notification button.
+- Modals.
+- Close buttons.
+- Toasts.
+- جميع الروابط.
+
+إذا كان أي زر غير مكتمل:
+- اربطه بوظيفة فعلية.
+- أو اجعله Disabled بوضوح مع Coming Soon.
+- لا تترك زرًا لا يستجيب بدون تفسير.
+
+========================================
+رابعًا: الفحص التقني
+========================================
+
+افحص:
+
+- Console errors.
+- TypeScript errors.
+- Broken imports.
+- Broken routes.
+- Missing assets.
+- Hydration errors.
+- localStorage errors.
+- API failures.
+- مشاكل RTL.
+- مشاكل Responsive.
+- Accessibility labels.
+- Keyboard navigation.
+- Focus states.
+
+نفذ:
+
+npm install
+npm run dev
+npm run build
+
+لا تنهِ المهمة حتى يعمل build بدون أخطاء.
+
+في النهاية أعطني:
+1. قائمة الملفات المعدلة.
+2. الأزرار التي تم اختبارها.
+3. الأخطاء التي تم إصلاحها.
+4. نتيجة npm run build.
+5. أي شيء ما زال Coming Soon.
