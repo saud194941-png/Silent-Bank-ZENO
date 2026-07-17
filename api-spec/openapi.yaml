@@ -1,0 +1,1419 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: ZENO — The Silent Bank API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dashboard
+    description: Dashboard summary
+  - name: customer
+    description: Customer-specific dashboard endpoints
+  - name: accounts
+    description: Bank accounts
+  - name: transactions
+    description: Transaction history
+  - name: cards
+    description: Payment cards
+  - name: analytics
+    description: Spending analytics
+  - name: notifications
+    description: User notifications
+  - name: profile
+    description: User profile
+  - name: recommendations
+    description: Explainable AI recommendations — read-only, no financial execution
+  - name: approvals
+    description: Pending approvals awaiting final customer confirmation
+  - name: admin
+    description: Admin-only metrics and recommendation rules management
+  - name: analyst
+    description: Analyst-only insights and UX analytics
+  - name: privacy
+    description: Privacy and AI personalization settings
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check (legacy)
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /health:
+    get:
+      operationId: getHealth
+      tags: [health]
+      summary: Full prototype health status
+      responses:
+        "200":
+          description: Prototype health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthFull"
+
+  /customer/summary:
+    get:
+      operationId: getCustomerSummary
+      tags: [customer]
+      summary: Customer dashboard summary — greeting, stats, shortcuts
+      responses:
+        "200":
+          description: Customer summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerSummary"
+
+  /customer/transactions:
+    get:
+      operationId: getCustomerTransactions
+      tags: [customer]
+      summary: Customer recent transactions
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List of customer transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerTransaction"
+
+  /customer/recommendations:
+    get:
+      operationId: getCustomerRecommendations
+      tags: [customer]
+      summary: AI-style proactive recommendations for the customer
+      responses:
+        "200":
+          description: List of recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerRecommendation"
+
+  /admin/metrics:
+    get:
+      operationId: getAdminMetrics
+      tags: [admin]
+      summary: Admin overview metrics
+      responses:
+        "200":
+          description: Admin metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminMetrics"
+
+  /admin/rules:
+    get:
+      operationId: getAdminRules
+      tags: [admin]
+      summary: List recommendation rules
+      responses:
+        "200":
+          description: List of rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecommendationRule"
+
+  /admin/rules/{id}/toggle:
+    post:
+      operationId: toggleAdminRule
+      tags: [admin]
+      summary: Toggle a recommendation rule on/off
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Toggled rule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rule:
+                    $ref: "#/components/schemas/RecommendationRule"
+                required:
+                  - rule
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analyst/insights:
+    get:
+      operationId: getAnalystInsights
+      tags: [analyst]
+      summary: Full analyst insights — journey, acceptance, friction
+      responses:
+        "200":
+          description: Analyst insights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalystInsights"
+
+  /recommendations:
+    get:
+      operationId: getRecommendations
+      tags: [recommendations]
+      summary: List all AI recommendations
+      responses:
+        "200":
+          description: List of recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+
+  /recommendations/{id}/accept:
+    post:
+      operationId: acceptRecommendation
+      tags: [recommendations]
+      summary: Accept a recommendation — moves it to approvals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Accepted recommendation and created approval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendation:
+                    $ref: "#/components/schemas/Recommendation"
+                  approval:
+                    $ref: "#/components/schemas/Approval"
+                required:
+                  - recommendation
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /recommendations/{id}/reject:
+    post:
+      operationId: rejectRecommendation
+      tags: [recommendations]
+      summary: Reject a recommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rejected recommendation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendation:
+                    $ref: "#/components/schemas/Recommendation"
+                required:
+                  - recommendation
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /recommendations/approvals:
+    get:
+      operationId: getApprovals
+      tags: [approvals]
+      summary: List pending and confirmed approvals
+      responses:
+        "200":
+          description: List of approvals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Approval"
+
+  /recommendations/approvals/{id}/confirm:
+    post:
+      operationId: confirmApproval
+      tags: [approvals]
+      summary: Final confirmation — marks as confirmed_demo (no real execution)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Confirmed approval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approval:
+                    $ref: "#/components/schemas/Approval"
+                required:
+                  - approval
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /recommendations/approvals/{id}/cancel:
+    post:
+      operationId: cancelApproval
+      tags: [approvals]
+      summary: Cancel a pending approval
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancelled approval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approval:
+                    $ref: "#/components/schemas/Approval"
+                required:
+                  - approval
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /approvals:
+    get:
+      operationId: getApprovalsStandalone
+      tags: [approvals]
+      summary: List all approvals (standalone path)
+      responses:
+        "200":
+          description: List of approvals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Approval"
+
+  /approvals/{id}/confirm:
+    post:
+      operationId: confirmApprovalStandalone
+      tags: [approvals]
+      summary: Confirm an approval (standalone path)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Confirmed approval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approval:
+                    $ref: "#/components/schemas/Approval"
+                required:
+                  - approval
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /approvals/{id}/cancel:
+    post:
+      operationId: cancelApprovalStandalone
+      tags: [approvals]
+      summary: Cancel an approval (standalone path)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancelled approval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approval:
+                    $ref: "#/components/schemas/Approval"
+                required:
+                  - approval
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /privacy/settings:
+    get:
+      operationId: getPrivacySettings
+      tags: [privacy]
+      summary: Get current privacy settings
+      responses:
+        "200":
+          description: Privacy settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrivacySettings"
+    post:
+      operationId: savePrivacySettings
+      tags: [privacy]
+      summary: Save privacy settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrivacySettings"
+      responses:
+        "200":
+          description: Updated privacy settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrivacySettings"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary with balances, stats, and recent transactions
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /accounts:
+    get:
+      operationId: getAccounts
+      tags: [accounts]
+      summary: List all user accounts
+      responses:
+        "200":
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Account"
+
+  /accounts/{id}:
+    get:
+      operationId: getAccount
+      tags: [accounts]
+      summary: Get account by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /transactions:
+    get:
+      operationId: getTransactions
+      tags: [transactions]
+      summary: List transactions with optional filtering
+      parameters:
+        - name: accountId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /transactions/{id}:
+    get:
+      operationId: getTransaction
+      tags: [transactions]
+      summary: Get transaction by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /cards:
+    get:
+      operationId: getCards
+      tags: [cards]
+      summary: List all user cards
+      responses:
+        "200":
+          description: List of cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Card"
+
+  /cards/{id}:
+    get:
+      operationId: getCard
+      tags: [cards]
+      summary: Get card by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Card details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analytics/spending:
+    get:
+      operationId: getSpendingAnalytics
+      tags: [analytics]
+      summary: Get spending breakdown by category
+      responses:
+        "200":
+          description: Spending analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpendingAnalytics"
+
+  /analytics/monthly:
+    get:
+      operationId: getMonthlyAnalytics
+      tags: [analytics]
+      summary: Get monthly income vs expenses for the past 6 months
+      responses:
+        "200":
+          description: Monthly analytics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyData"
+
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: List user notifications
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+components:
+  schemas:
+    CustomerSummary:
+      type: object
+      properties:
+        greeting:
+          type: string
+        userName:
+          type: string
+        balance:
+          type: number
+        monthlyIncome:
+          type: number
+        monthlyExpenses:
+          type: number
+        expectedSavings:
+          type: number
+        savingsRate:
+          type: number
+        spendingMonths:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpendingMonth"
+        shortcuts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Shortcut"
+      required:
+        - greeting
+        - userName
+        - balance
+        - monthlyIncome
+        - monthlyExpenses
+        - expectedSavings
+        - savingsRate
+        - spendingMonths
+        - shortcuts
+
+    SpendingMonth:
+      type: object
+      properties:
+        month:
+          type: string
+        amount:
+          type: number
+      required:
+        - month
+        - amount
+
+    Shortcut:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+      required:
+        - id
+        - label
+        - icon
+        - color
+
+    CustomerTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [credit, debit]
+        date:
+          type: string
+        status:
+          type: string
+          enum: [completed, pending, failed]
+        icon:
+          type: ["string", "null"]
+      required:
+        - id
+        - description
+        - category
+        - amount
+        - type
+        - date
+        - status
+
+    CustomerRecommendation:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        confidence:
+          type: number
+        actionLabel:
+          type: string
+        reasoning:
+          type: string
+        type:
+          type: string
+          enum: [transfer, bill, saving, alert]
+      required:
+        - id
+        - title
+        - description
+        - confidence
+        - actionLabel
+        - reasoning
+        - type
+
+    SupportingFact:
+      type: object
+      properties:
+        label:
+          type: string
+        detail:
+          type: string
+      required:
+        - label
+        - detail
+
+    Recommendation:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [transfer, bill, travel, saving, alert]
+        title:
+          type: string
+        description:
+          type: string
+        reasoning:
+          type: string
+        confidence:
+          type: number
+        supportingFacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupportingFact"
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        beneficiary:
+          type: ["string", "null"]
+        amount:
+          type: ["number", "null"]
+        currency:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - type
+        - title
+        - description
+        - reasoning
+        - confidence
+        - supportingFacts
+        - status
+        - currency
+        - createdAt
+
+    Approval:
+      type: object
+      properties:
+        id:
+          type: string
+        recommendationId:
+          type: string
+        operation:
+          type: string
+        beneficiary:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        reasoning:
+          type: string
+        status:
+          type: string
+          enum: [awaiting_confirmation, confirmed_demo, cancelled]
+        acceptedAt:
+          type: string
+        confirmedAt:
+          type: ["string", "null"]
+      required:
+        - id
+        - recommendationId
+        - operation
+        - beneficiary
+        - amount
+        - currency
+        - reasoning
+        - status
+        - acceptedAt
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    HealthFull:
+      type: object
+      properties:
+        status:
+          type: string
+        project:
+          type: string
+        mode:
+          type: string
+      required:
+        - status
+        - project
+        - mode
+
+    PrivacySettings:
+      type: object
+      properties:
+        analyzeTransactions:
+          type: boolean
+        analyzeUsagePatterns:
+          type: boolean
+        personalizedRecommendations:
+          type: boolean
+        forecastNotifications:
+          type: boolean
+        adaptiveHomePage:
+          type: boolean
+        travelContextEnabled:
+          type: boolean
+        keepRecommendationHistory:
+          type: boolean
+      required:
+        - analyzeTransactions
+        - analyzeUsagePatterns
+        - personalizedRecommendations
+        - forecastNotifications
+        - adaptiveHomePage
+        - travelContextEnabled
+        - keepRecommendationHistory
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalBalance:
+          type: number
+        monthlyIncome:
+          type: number
+        monthlyExpenses:
+          type: number
+        savingsRate:
+          type: number
+        recentTransactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        accountsOverview:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccountOverview"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Alert"
+      required:
+        - totalBalance
+        - monthlyIncome
+        - monthlyExpenses
+        - savingsRate
+        - recentTransactions
+        - accountsOverview
+        - alerts
+
+    AccountOverview:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        balance:
+          type: number
+        type:
+          type: string
+        currency:
+          type: string
+      required:
+        - id
+        - name
+        - balance
+        - type
+        - currency
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, success]
+      required:
+        - id
+        - type
+        - message
+        - severity
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [checking, savings, investment]
+        balance:
+          type: number
+        currency:
+          type: string
+        iban:
+          type: string
+        accountNumber:
+          type: string
+        interestRate:
+          type: ["number", "null"]
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - type
+        - balance
+        - currency
+        - iban
+        - accountNumber
+        - isDefault
+        - createdAt
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        accountId:
+          type: string
+        type:
+          type: string
+          enum: [credit, debit]
+        amount:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        merchant:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [completed, pending, failed]
+        date:
+          type: string
+        icon:
+          type: ["string", "null"]
+      required:
+        - id
+        - accountId
+        - type
+        - amount
+        - currency
+        - description
+        - category
+        - status
+        - date
+
+    Card:
+      type: object
+      properties:
+        id:
+          type: string
+        accountId:
+          type: string
+        type:
+          type: string
+          enum: [visa, mastercard]
+        cardNumber:
+          type: string
+        cardHolder:
+          type: string
+        expiryDate:
+          type: string
+        cvv:
+          type: string
+        isVirtual:
+          type: boolean
+        isFrozen:
+          type: boolean
+        spendingLimit:
+          type: ["number", "null"]
+        currentSpend:
+          type: number
+        color:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - accountId
+        - type
+        - cardNumber
+        - cardHolder
+        - expiryDate
+        - cvv
+        - isVirtual
+        - isFrozen
+        - currentSpend
+        - color
+        - createdAt
+
+    SpendingAnalytics:
+      type: object
+      properties:
+        totalSpent:
+          type: number
+        period:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryBreakdown"
+      required:
+        - totalSpent
+        - period
+        - categories
+
+    CategoryBreakdown:
+      type: object
+      properties:
+        category:
+          type: string
+        amount:
+          type: number
+        percentage:
+          type: number
+        color:
+          type: string
+        transactionCount:
+          type: integer
+      required:
+        - category
+        - amount
+        - percentage
+        - color
+        - transactionCount
+
+    MonthlyData:
+      type: object
+      properties:
+        month:
+          type: string
+        income:
+          type: number
+        expenses:
+          type: number
+        savings:
+          type: number
+      required:
+        - month
+        - income
+        - expenses
+        - savings
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [transaction, security, offer, system]
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - type
+        - title
+        - message
+        - isRead
+        - createdAt
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        avatar:
+          type: ["string", "null"]
+        tier:
+          type: string
+          enum: [standard, premium, elite]
+        joinedAt:
+          type: string
+        lastLogin:
+          type: string
+        preferredLanguage:
+          type: string
+        twoFactorEnabled:
+          type: boolean
+      required:
+        - id
+        - name
+        - email
+        - phone
+        - tier
+        - joinedAt
+        - lastLogin
+        - preferredLanguage
+        - twoFactorEnabled
+
+    ScenarioPerf:
+      type: object
+      properties:
+        name:
+          type: string
+        rate:
+          type: number
+      required: [name, rate]
+
+    UxMetrics:
+      type: object
+      properties:
+        stepsBeforeZeno:
+          type: number
+        stepsAfterZeno:
+          type: number
+        satisfactionRate:
+          type: number
+        personalizationActivation:
+          type: number
+      required: [stepsBeforeZeno, stepsAfterZeno, satisfactionRate, personalizationActivation]
+
+    AdminMetrics:
+      type: object
+      properties:
+        totalUsers:
+          type: number
+        totalRecommendations:
+          type: number
+        acceptanceRate:
+          type: number
+        avgTimeSaved:
+          type: number
+        pendingApprovals:
+          type: number
+        topScenario:
+          type: string
+        scenarioPerformance:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScenarioPerf"
+        uxMetrics:
+          $ref: "#/components/schemas/UxMetrics"
+      required:
+        - totalUsers
+        - totalRecommendations
+        - acceptanceRate
+        - avgTimeSaved
+        - pendingApprovals
+        - topScenario
+        - scenarioPerformance
+        - uxMetrics
+
+    RecommendationRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [high, medium, low]
+        enabled:
+          type: boolean
+        triggerCount:
+          type: number
+        acceptanceRate:
+          type: number
+      required: [id, name, description, priority, enabled, triggerCount, acceptanceRate]
+
+    JourneyStage:
+      type: object
+      properties:
+        stage:
+          type: string
+        completion:
+          type: number
+        dropOff:
+          type: number
+      required: [stage, completion, dropOff]
+
+    AcceptedItem:
+      type: object
+      properties:
+        title:
+          type: string
+        rate:
+          type: number
+        type:
+          type: string
+      required: [title, rate, type]
+
+    RejectedItem:
+      type: object
+      properties:
+        title:
+          type: string
+        rate:
+          type: number
+        reason:
+          type: string
+      required: [title, rate, reason]
+
+    ConfidenceByType:
+      type: object
+      properties:
+        type:
+          type: string
+        avg:
+          type: number
+        color:
+          type: string
+      required: [type, avg, color]
+
+    FrictionPoint:
+      type: object
+      properties:
+        step:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [high, medium, low]
+        suggestion:
+          type: string
+      required: [step, description, severity, suggestion]
+
+    UxSuggestion:
+      type: object
+      properties:
+        title:
+          type: string
+        impact:
+          type: string
+          enum: [high, medium, low]
+        effort:
+          type: string
+          enum: [high, medium, low]
+        description:
+          type: string
+      required: [title, impact, effort, description]
+
+    InsightRow:
+      type: object
+      properties:
+        id:
+          type: string
+        recommendation:
+          type: string
+        type:
+          type: string
+        acceptanceRate:
+          type: number
+        avgConfidence:
+          type: number
+        uxNote:
+          type: string
+      required: [id, recommendation, type, acceptanceRate, avgConfidence, uxNote]
+
+    AnalystInsights:
+      type: object
+      properties:
+        journeyStages:
+          type: array
+          items:
+            $ref: "#/components/schemas/JourneyStage"
+        topAccepted:
+          type: array
+          items:
+            $ref: "#/components/schemas/AcceptedItem"
+        topRejected:
+          type: array
+          items:
+            $ref: "#/components/schemas/RejectedItem"
+        confidenceByType:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfidenceByType"
+        frictionPoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/FrictionPoint"
+        uxSuggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/UxSuggestion"
+        insightTable:
+          type: array
+          items:
+            $ref: "#/components/schemas/InsightRow"
+      required:
+        - journeyStages
+        - topAccepted
+        - topRejected
+        - confidenceByType
+        - frictionPoints
+        - uxSuggestions
+        - insightTable
